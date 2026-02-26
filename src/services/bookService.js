@@ -7,6 +7,8 @@ export async function getAllBooks() {
     ORDER BY sort_order, created_at
   `;
 
+  console.log('raw book:', books[0])
+
   const withChapters = await Promise.all(books.map(async (book) => {
     const chapters = await sql`
       SELECT id, title FROM chapters
