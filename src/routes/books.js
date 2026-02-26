@@ -5,16 +5,14 @@ export default async function booksRoutes(fastify) {
 
   // GET /api/books
   fastify.get('/', { onRequest: [requireAuth] }, async () => {
-    const books = await bookService.getAllBooks();
-    // snake_case → camelCase для фронта
-    return books.map(formatBook);
+    return bookService.getAllBooks(); // ← убрать .map(formatBook)
   });
 
   // GET /api/books/:bookId
   fastify.get('/:bookId', { onRequest: [requireAuth] }, async (request, reply) => {
     const book = await bookService.getBookById(request.params.bookId);
     if (!book) return reply.code(404).send({ error: 'Book not found' });
-    return formatBook(book);
+    return book; // ← убрать formatBook(book)
   });
 
   // GET /api/books/:bookId/chapters/:chapterId
@@ -37,7 +35,7 @@ export default async function booksRoutes(fastify) {
 
     try {
       const book = await bookService.createBook({ id, title, author, coverUrl, description: description || '', authorNote: authorNote || '', sortOrder });
-      return reply.code(201).send(formatBook(book));
+      return reply.code(201).send(book);
     } catch (e) {
       if (e.message.includes('UNIQUE')) {
         return reply.code(409).send({ error: 'Книга с таким id уже существует' });
