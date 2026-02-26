@@ -3,21 +3,19 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import jwt from '@fastify/jwt';
 import multipart from '@fastify/multipart';
-
-import authRoutes    from './routes/auth.js';
-import booksRoutes   from './routes/books.js';
-import translateRoutes from './routes/translate.js';
-import uploadRoutes  from './routes/upload.js';
-import audioRoutes   from './routes/audio.js';
-import articleRoutes from './routes/articles.js';
-
-// Инициализируем БД при старте
 import './db.js';
 
+import authRoutes      from './routes/auth.js';
+import booksRoutes     from './routes/books.js';
+import translateRoutes from './routes/translate.js';
+import uploadRoutes    from './routes/upload.js';
+import audioRoutes     from './routes/audio.js';
+import articleRoutes   from './routes/articles.js';
+
 const fastify = Fastify({
-  logger: process.env.NODE_ENV !== 'production' ? {
-    transport: { target: 'pino-pretty', options: { colorize: true } },
-  } : true,
+  logger: process.env.NODE_ENV !== 'production'
+    ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
+    : true,
 });
 
 await fastify.register(cors, {
@@ -29,7 +27,7 @@ await fastify.register(cors, {
 await fastify.register(jwt, { secret: process.env.JWT_SECRET });
 
 await fastify.register(multipart, {
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB для аудио
+  limits: { fileSize: 50 * 1024 * 1024 },
 });
 
 await fastify.register(authRoutes,      { prefix: '/api/auth' });
@@ -40,6 +38,16 @@ await fastify.register(audioRoutes,     { prefix: '/api/audio' });
 await fastify.register(articleRoutes,   { prefix: '/api/articles' });
 
 fastify.get('/health', async () => ({ status: 'ok', time: new Date().toISOString() }));
+
+// Антисон для Render
+if (process.env.NODE_ENV === 'production') {
+  setInterval(async () => {
+    try {
+      const url = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3001}`;
+      await fetch(`${url}/health`);
+    } catch {}
+  }, 14 * 60 * 1000);
+}
 
 try {
   await fastify.listen({ port: Number(process.env.PORT) || 3001, host: '0.0.0.0' });

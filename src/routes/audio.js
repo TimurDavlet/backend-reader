@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 import crypto from 'crypto';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import * as audioService from '../services/audioService.js';
-import { uploadAudio } from '../services/cloudinaryService.js';
+import { uploadAudio } from '../services/storageService.js';
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || 'uploads';
 
@@ -51,12 +51,13 @@ export default async function audioRoutes(fastify) {
       return reply.code(400).send({ error: 'Только MP3, WAV, OGG, M4A' });
     }
   
-    const ext      = path.extname(data.filename).toLowerCase() || '.mp3';
-    const filename = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
-    const buffer   = await data.toBuffer();
-  
-    const result = await uploadAudio(buffer, filename);
-    return { url: result.secure_url };
+    try {
+      const buffer = await data.toBuffer();
+      const result = await uploadAudio(buffer, data.filename);
+      return { url: result.url };
+    } catch (e) {
+      return reply.code(500).send({ error: e.message });
+    }
   });
 
   // PUT /api/audio/page
