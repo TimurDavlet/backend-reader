@@ -6,23 +6,29 @@ export default async function authRoutes(fastify) {
   // POST /api/auth/login
   fastify.post('/login', async (request, reply) => {
     const { login, password } = request.body;
-
-    if (!login || !password) {
-      return reply.code(400).send({ error: 'Введите логин и пароль' });
+  
+    const adminLogin    = process.env.ADMIN_LOGIN;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    const userLogin     = process.env.USER_LOGIN;
+    const userPassword  = process.env.USER_PASSWORD;
+  
+    let role = null;
+    let name = null;
+  
+    if (login === adminLogin && password === adminPassword) {
+      role = 'admin';
+      name = 'Admin';
+    } else if (login === userLogin && password === userPassword) {
+      role = 'user';
+      name = userLogin;
     }
-
-    // Пока один захардкоженный пользователь из .env
-    // TODO: когда понадобятся другие пользователи — добавить таблицу users
-    if (login !== ADMIN_LOGIN || password !== ADMIN_PASSWORD) {
+  
+    if (!role) {
       return reply.code(401).send({ error: 'Неверный логин или пароль' });
     }
-
-    const token = fastify.jwt.sign(
-      { id: 1, login, isAdmin: true },
-      { expiresIn: '30d' }
-    );
-
-    return { token, user: { id: 1, login, name: login } };
+  
+    const token = fastify.jwt.sign({ login, role, name });
+    return { token, user: { login, role, name } };
   });
 
   // POST /api/auth/logout — клиент просто удаляет токен
