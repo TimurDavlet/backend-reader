@@ -4,6 +4,9 @@ import crypto from 'crypto';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import * as audioService from '../services/audioService.js';
 import { uploadAudio } from '../services/storageService.js';
+import { requireAuth, requireAdmin } from '../middleware/auth.js';
+import * as audioService from '../services/audioService.js';
+import { uploadAudio } from '../services/storageService.js';
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR || 'uploads';
 
